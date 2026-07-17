@@ -14,8 +14,12 @@ public class SecurityCheck {
         return Map.of(
                 "method", request.getMethod(),
                 "uri", request.getRequestURI(),
-                "sessionId", request.getRequestedSessionId() != null ? request.getRequestedSessionId() : "Session Required",
-                "Authorization" , request.getHeader("Authorization")
+                "sessionId", request.getRequestedSessionId() != null ? request.getRequestedSessionId() : "Session Required"
         );
+    }
+
+    @GetMapping("/request/add")
+    public String getRequest(HttpServletRequest request) {
+        return "Hey Arbaz You have to Authenticated";
     }
 }
