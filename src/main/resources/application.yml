@@ -1,8 +1,13 @@
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/aaspass
-    username:
-    password:
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
   security:
     oauth2:
       client:
