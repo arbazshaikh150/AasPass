@@ -1,4 +1,8 @@
 spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/aaspass
+    username:
+    password:
   security:
     oauth2:
       client:
