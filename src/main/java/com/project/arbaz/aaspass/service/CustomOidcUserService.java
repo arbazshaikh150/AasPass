@@ -3,6 +3,7 @@ package com.project.arbaz.aaspass.service;
 import com.project.arbaz.aaspass.enums.Roles;
 import com.project.arbaz.aaspass.entity.Users;
 import com.project.arbaz.aaspass.repository.UserRepository;
+import com.project.arbaz.aaspass.security.AppOidcUser;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,7 +12,6 @@ import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 
@@ -42,15 +42,21 @@ public class CustomOidcUserService implements OAuth2UserService<OidcUserRequest,
 
         appUser.setEmail(oidcUser.getEmail());
         appUser.setName(oidcUser.getFullName());
-        appUserRepository.save(appUser);
+        Users savedUser = appUserRepository.save(appUser);
 
 
         // It should return a simpleGranted authority
-        Set<GrantedAuthority> role = Set.of(new SimpleGrantedAuthority("ROLE_" + appUser.getRole()));
-        return new DefaultOidcUser(
+        Set<GrantedAuthority> role = Set.of(new SimpleGrantedAuthority("ROLE_" + savedUser.getRole()));
+        return new AppOidcUser(
                 role ,
                 oidcUser.getIdToken(),
-                oidcUser.getUserInfo()
+                oidcUser.getUserInfo(),
+                savedUser.getUserId(),
+                savedUser.getEmail(),
+                savedUser.getName(),
+                savedUser.getRole(),
+                provider,
+                providerSubject
         );
     }
 
@@ -62,4 +68,3 @@ public class CustomOidcUserService implements OAuth2UserService<OidcUserRequest,
         return user;
     }
 }
-
