@@ -1,6 +1,6 @@
 package com.project.arbaz.aaspass.service;
 
-import com.project.arbaz.aaspass.Roles;
+import com.project.arbaz.aaspass.enums.Roles;
 import com.project.arbaz.aaspass.entity.Users;
 import com.project.arbaz.aaspass.repository.UserRepository;
 import org.jspecify.annotations.NonNull;
