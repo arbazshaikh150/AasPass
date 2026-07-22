@@ -7,6 +7,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -20,9 +21,12 @@ public class SecurityConfig {
     }
 
     // Creating a bean which manage by spring
+    // Todo : hanlde proper csrf
     @Bean
     public SecurityFilterChain appSecurity(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(req -> req
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(req -> req
                         .requestMatchers(HttpMethod.GET, "/request").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/request/add").authenticated()
