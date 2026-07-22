@@ -28,17 +28,20 @@ public class EventService {
     private final EventSeatRepository eventSeatRepository;
     private final EventUserRepository eventUserRepository;
     private final UserRepository userRepository;
+    private final GeoIndexService geoIndexService;
 
     public EventService(
             EventRepository eventRepository,
             EventSeatRepository eventSeatRepository,
             EventUserRepository eventUserRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            GeoIndexService geoIndexService
     ) {
         this.eventRepository = eventRepository;
         this.eventSeatRepository = eventSeatRepository;
         this.eventUserRepository = eventUserRepository;
         this.userRepository = userRepository;
+        this.geoIndexService = geoIndexService;
     }
 
     @Transactional(readOnly = true)
@@ -81,6 +84,7 @@ public class EventService {
         eventUser.setEvent(savedEvent);
         eventUser.setUser(user);
         EventUser savedEventUser = eventUserRepository.save(eventUser);
+        geoIndexService.indexEvent(savedEvent.getEventId(), savedEvent.getLatitude(), savedEvent.getLongitude());
 
         return toResponse(savedEvent, savedEventSeat, savedEventUser);
     }
@@ -118,6 +122,8 @@ public class EventService {
         }
 
         Events savedEvent = eventRepository.save(event);
+        geoIndexService.indexEvent(savedEvent.getEventId(), savedEvent.getLatitude(), savedEvent.getLongitude());
+
         EventSeat eventSeat = eventSeatRepository.findByEventEventId(eventId).orElse(null);
 
         if (request.numberOfSeats() != null) {
@@ -145,6 +151,7 @@ public class EventService {
         eventSeatRepository.findByEventEventId(eventId).ifPresent(eventSeatRepository::delete);
         eventUserRepository.delete(eventUser);
         eventRepository.delete(event);
+        geoIndexService.removeEvent(eventId);
     }
 
     private Events findEventOrThrow(Long eventId) {
