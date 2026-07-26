@@ -1,8 +1,6 @@
 package com.project.arbaz.aaspass.service;
 
-import com.project.arbaz.aaspass.dto.CreateEventRequest;
-import com.project.arbaz.aaspass.dto.EventDetailsResponse;
-import com.project.arbaz.aaspass.dto.UpdateEventRequest;
+import com.project.arbaz.aaspass.dto.*;
 import com.project.arbaz.aaspass.entity.EventSeat;
 import com.project.arbaz.aaspass.entity.EventUser;
 import com.project.arbaz.aaspass.entity.Events;
@@ -21,6 +19,9 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import static com.project.arbaz.aaspass.constants.Defaults.DEFAULT_FEED_LIMIT;
+import static com.project.arbaz.aaspass.constants.Defaults.DEFAULT_FEED_RADIUS_KM;
 
 @Service
 public class EventService {
@@ -86,6 +87,9 @@ public class EventService {
         EventUser savedEventUser = eventUserRepository.save(eventUser);
         geoIndexService.indexEvent(savedEvent.getEventId(), savedEvent.getLatitude(), savedEvent.getLongitude());
 
+        // Here async jobs should run which will notify the users
+        // TODO : EVENT ASYNC PROCESSING TO THE NEARBY USERS ( CAN USE SSE OR DIRECT ASYNC JOBS FOR NOTIFICATION )
+        // TODO : I WANT NOTIIFCATION SHOULD BE DONE IN THE APPLICATION ONLY ( SSE WOULD BE THE NICE CHOICE )
         return toResponse(savedEvent, savedEventSeat, savedEventUser);
     }
 
@@ -197,6 +201,22 @@ public class EventService {
         if (!Objects.equals(currentUser.getUserId(), eventUser.getUser().getUserId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the event creator can modify this event");
         }
+    }
+
+
+    // I Will be getting the list of users for which the event notification should be displayed
+    // A background job can be enough for it
+    // It will just add the users and then all the users that are nearer to the location is going to get the notification
+    public List<NearbyLocationResponse> getNearbyUsers(LocationRequest req, Double radiusKm, Long limit) {
+        if (req == null || req.latitude() == null || req.longitude() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Location request is required");
+        }
+        return geoIndexService.findNearbyUsers(
+                req.latitude(),
+                req.longitude(),
+                radiusKm != null ? radiusKm : DEFAULT_FEED_RADIUS_KM,
+                limit != null ? limit : DEFAULT_FEED_LIMIT
+        );
     }
 
     private EventDetailsResponse toResponse(Events event, EventSeat eventSeat, EventUser eventUser) {

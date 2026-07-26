@@ -22,12 +22,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+import static com.project.arbaz.aaspass.constants.Defaults.*;
+
 @Service
 public class UserService {
-    private static final int USER_EVENTS_PAGE_SIZE = 10;
-    private static final double DEFAULT_FEED_RADIUS_KM = 5.0;
-    private static final long DEFAULT_FEED_LIMIT = 50L;
-
     private final EventUserRepository eventUserRepository;
     private final EventSeatRepository eventSeatRepository;
     private final UserRepository userRepository;
