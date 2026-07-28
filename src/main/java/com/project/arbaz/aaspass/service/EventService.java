@@ -30,19 +30,22 @@ public class EventService {
     private final EventUserRepository eventUserRepository;
     private final UserRepository userRepository;
     private final GeoIndexService geoIndexService;
+    private final S3Service s3Service;
 
     public EventService(
             EventRepository eventRepository,
             EventSeatRepository eventSeatRepository,
             EventUserRepository eventUserRepository,
             UserRepository userRepository,
-            GeoIndexService geoIndexService
+            GeoIndexService geoIndexService,
+            S3Service s3Service
     ) {
         this.eventRepository = eventRepository;
         this.eventSeatRepository = eventSeatRepository;
         this.eventUserRepository = eventUserRepository;
         this.userRepository = userRepository;
         this.geoIndexService = geoIndexService;
+        this.s3Service = s3Service;
     }
 
     @Transactional(readOnly = true)
@@ -59,6 +62,8 @@ public class EventService {
         validateCreateRequest(request);
 
         Users user = getCurrentUserReference(currentUser);
+        List<String> imageUrls = request.imageUrls() != null ? request.imageUrls() : List.of();
+        s3Service.markPendingImagesCompleted(imageUrls, user.getUserId());
 
         Events event = new Events();
         event.setEventName(request.eventName());
@@ -66,7 +71,7 @@ public class EventService {
         event.setHighlightedTags(new ArrayList<>(request.highlightedTags()));
         // Here i have to upload on the s3 bucket or something
         // i have to read it and then find the suitable method for doing it so
-        event.setImageUrls(new ArrayList<>(request.imageUrls() != null ? request.imageUrls() : List.of()));
+        event.setImageUrls(new ArrayList<>(imageUrls));
         event.setType(request.type());
         event.setLatitude(request.latitude());
         event.setLongitude(request.longitude());
@@ -113,6 +118,7 @@ public class EventService {
             event.setHighlightedTags(new ArrayList<>(request.highlightedTags()));
         }
         if (request.imageUrls() != null) {
+            s3Service.markPendingImagesCompleted(findNewImageUrls(request.imageUrls(), event.getImageUrls()), currentUser.getUserId());
             event.setImageUrls(new ArrayList<>(request.imageUrls()));
         }
         if (request.type() != null) {
@@ -201,6 +207,19 @@ public class EventService {
         if (!Objects.equals(currentUser.getUserId(), eventUser.getUser().getUserId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the event creator can modify this event");
         }
+    }
+
+    private List<String> findNewImageUrls(List<String> requestedImageUrls, List<String> existingImageUrls) {
+        List<String> newImageUrls = new ArrayList<>();
+        List<String> currentImageUrls = existingImageUrls != null ? existingImageUrls : List.of();
+
+        for (String imageUrl : requestedImageUrls) {
+            if (!currentImageUrls.contains(imageUrl)) {
+                newImageUrls.add(imageUrl);
+            }
+        }
+
+        return newImageUrls;
     }
 
 

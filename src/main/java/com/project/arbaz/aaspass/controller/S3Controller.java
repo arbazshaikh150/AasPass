@@ -1,10 +1,12 @@
 package com.project.arbaz.aaspass.controller;
 
 import com.project.arbaz.aaspass.dto.PresignedRequestDto;
+import com.project.arbaz.aaspass.dto.PresignedResponseDto;
+import com.project.arbaz.aaspass.security.AppOidcUser;
 import com.project.arbaz.aaspass.service.S3Service;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.net.URL;
 
 @RestController
 @RequestMapping("/s3")
@@ -19,13 +21,23 @@ public class S3Controller {
     // Only Authenticated Users can request for the presigned url
     // And there must be a limit on number of the uses per users
     @PostMapping("/presigned-url")
-    public ResponseEntity<?> getPresignedUrl(@RequestBody PresignedRequestDto presignedRequestDto) {
-        // Now forming the key
-        if(presignedRequestDto == null || presignedRequestDto.filename() == null ||  presignedRequestDto.type() == null) {
+    public ResponseEntity<PresignedResponseDto> getPresignedUrl(
+            @RequestBody PresignedRequestDto presignedRequestDto,
+            @AuthenticationPrincipal AppOidcUser currentUser
+    ) {
+        if(presignedRequestDto == null) {
             return ResponseEntity.badRequest().build();
         }
-        URL url =  s3Service.generateUploadUrl(presignedRequestDto.filename() , presignedRequestDto.type());
-        return ResponseEntity.ok(url);
+        S3Service.PresignedUpload presignedUpload = s3Service.generateUploadUrl(
+                presignedRequestDto.fileName(),
+                presignedRequestDto.size(),
+                presignedRequestDto.contentType(),
+                currentUser
+        );
+        return ResponseEntity.ok(new PresignedResponseDto(
+                presignedUpload.uploadUrl().toString(),
+                presignedUpload.key()
+        ));
     }
 
 }

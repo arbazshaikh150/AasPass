@@ -1,8 +1,12 @@
 package com.project.arbaz.aaspass.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 public record PresignedRequestDto(
-        String filename,
+        @JsonAlias("filename")
+        String fileName,
         Long size,
-        String type
+        @JsonAlias("type")
+        String contentType
 ) {
 }
