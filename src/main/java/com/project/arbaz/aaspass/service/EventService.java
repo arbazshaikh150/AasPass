@@ -11,6 +11,7 @@ import com.project.arbaz.aaspass.repository.EventSeatRepository;
 import com.project.arbaz.aaspass.repository.EventUserRepository;
 import com.project.arbaz.aaspass.repository.UserRepository;
 import com.project.arbaz.aaspass.security.AppOidcUser;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,13 +33,17 @@ public class EventService {
     private final GeoIndexService geoIndexService;
     private final S3Service s3Service;
 
+    // Using Spring Event Publisher
+    private final ApplicationEventPublisher applicationEventPublisher;
+
     public EventService(
             EventRepository eventRepository,
             EventSeatRepository eventSeatRepository,
             EventUserRepository eventUserRepository,
             UserRepository userRepository,
             GeoIndexService geoIndexService,
-            S3Service s3Service
+            S3Service s3Service,
+            ApplicationEventPublisher applicationEventPublisher
     ) {
         this.eventRepository = eventRepository;
         this.eventSeatRepository = eventSeatRepository;
@@ -46,6 +51,7 @@ public class EventService {
         this.userRepository = userRepository;
         this.geoIndexService = geoIndexService;
         this.s3Service = s3Service;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -91,10 +97,10 @@ public class EventService {
         eventUser.setUser(user);
         EventUser savedEventUser = eventUserRepository.save(eventUser);
         geoIndexService.indexEvent(savedEvent.getEventId(), savedEvent.getLatitude(), savedEvent.getLongitude());
-
         // Here async jobs should run which will notify the users
         // TODO : EVENT ASYNC PROCESSING TO THE NEARBY USERS ( CAN USE SSE OR DIRECT ASYNC JOBS FOR NOTIFICATION )
         // TODO : I WANT NOTIIFCATION SHOULD BE DONE IN THE APPLICATION ONLY ( SSE WOULD BE THE NICE CHOICE )
+        applicationEventPublisher.publishEvent(new EventCreatedEvent(savedEvent.getEventId(), savedEvent.getLatitude(), savedEvent.getLongitude()));
         return toResponse(savedEvent, savedEventSeat, savedEventUser);
     }
 

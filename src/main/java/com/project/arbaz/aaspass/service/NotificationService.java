@@ -13,9 +13,14 @@ import static com.project.arbaz.aaspass.constants.Defaults.DEFAULT_USER_RADIUS_K
 public class NotificationService {
     private final GeoIndexService geoIndexService;
     private final UserRepository userRepository;
-    public NotificationService(GeoIndexService geoIndexService ,  UserRepository userRepository) {
+    private final AaspassEmailService emailService;
+    private final String SUBJECT = "Event Notification";
+    private final String BODY = "Event X is Created near You !!"; // Testing purpose only
+
+    public NotificationService(GeoIndexService geoIndexService ,  UserRepository userRepository , AaspassEmailService emailService) {
         this.geoIndexService = geoIndexService;
         this.userRepository = userRepository;
+        this.emailService = emailService;
     }
 
     public void notify(Double latitude, Double longitude) {
@@ -27,6 +32,8 @@ public class NotificationService {
 
         List<String> userEmails = userRepository.findEmailsByUserIdIn(userIds);
         // Now using email service for sending the emails
+        emailService.sendEmails(userEmails , SUBJECT, BODY);
+
     }
 
     public List<NearbyLocationResponse> getNearbyUsers( Double latitude, Double longitude) {
