@@ -65,7 +65,6 @@ public class S3Service {
                 .bucket(bucket)
                 .key(key)
                 .contentType(contentType)
-                .contentLength(imageSize)
                 .build();
 
         PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
@@ -262,7 +261,8 @@ public class S3Service {
         }
     }
 
-    @Scheduled(fixedDelay = 5000 * 60)
+    @Scheduled(fixedDelay = 2000 * 60)
+    @Transactional
     public void filterExpiredImages() {
         LocalDateTime expiredBefore = LocalDateTime.now().minus(UPLOAD_EXPIRATION);
 
