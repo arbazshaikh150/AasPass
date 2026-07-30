@@ -2,10 +2,14 @@ package com.project.arbaz.aaspass.controller;
 
 import com.project.arbaz.aaspass.dto.CreateEventRequest;
 import com.project.arbaz.aaspass.dto.EventDetailsResponse;
+import com.project.arbaz.aaspass.dto.NearbyLocationResponse;
 import com.project.arbaz.aaspass.dto.UpdateEventRequest;
 import com.project.arbaz.aaspass.security.AppOidcUser;
 import com.project.arbaz.aaspass.service.EventService;
+import com.project.arbaz.aaspass.service.GeoIndexService;
+import com.project.arbaz.aaspass.service.NotificationService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,13 +21,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/events")
 public class EventDetails {
     private final EventService eventService;
+    public final NotificationService notificationService;
 
-    public EventDetails(EventService eventService) {
+    public EventDetails(EventService eventService ,  NotificationService notificationService) {
         this.eventService = eventService;
+        this.notificationService = notificationService;
     }
 
     @GetMapping("/{eventId}")
@@ -57,4 +66,19 @@ public class EventDetails {
     ) {
         eventService.deleteEvent(eventId, currentUser);
     }
+
+    // Fetching the nearby user's for the given event
+    @GetMapping("/{latitude}/{longitude}/getUser")
+    public List<NearbyLocationResponse> getNearbyUser(@PathVariable Double longitude , @PathVariable Double latitude, @AuthenticationPrincipal AppOidcUser currentUser) {
+        return notificationService.getNearbyUsers(latitude , longitude);
+    }
+
+    @PostMapping("/notify")
+    public ResponseEntity<?> notifyEvent(@RequestBody Map<String, Double> request , @AuthenticationPrincipal AppOidcUser currentUser) {
+        notificationService.notify(
+                request.get("latitude"),
+                request.get("longitude"));
+        return ResponseEntity.ok("Notification is sent");
+    }
+
 }
