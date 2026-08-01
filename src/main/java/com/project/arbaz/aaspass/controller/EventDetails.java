@@ -6,7 +6,6 @@ import com.project.arbaz.aaspass.dto.NearbyLocationResponse;
 import com.project.arbaz.aaspass.dto.UpdateEventRequest;
 import com.project.arbaz.aaspass.security.AppOidcUser;
 import com.project.arbaz.aaspass.service.EventService;
-import com.project.arbaz.aaspass.service.GeoIndexService;
 import com.project.arbaz.aaspass.service.NotificationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
