@@ -40,4 +40,12 @@ public class S3Controller {
         ));
     }
 
+    @GetMapping("/view-url")
+    public ResponseEntity<PresignedResponseDto> getViewUrl(@RequestParam String key) {
+        return ResponseEntity.ok(new PresignedResponseDto(
+                s3Service.generateViewUrl(key).toString(),
+                key
+        ));
+    }
+
 }

@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
@@ -90,6 +91,22 @@ public class S3Service {
 //                .build();
 //        return s3Presigner.presignGetObject(presignRequest).url();
 //    }
+    public URL generateViewUrl(String key) {
+        if (key == null || key.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Valid image key is required");
+        }
+
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .build();
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(UPLOAD_EXPIRATION)
+                .getObjectRequest(getObjectRequest)
+                .build();
+
+        return s3Presigner.presignGetObject(presignRequest).url();
+    }
     public void addKeyToDb(String key , Long createdBy , Long size , String fileName){
         if(key == null || key.isBlank() || createdBy == null || size == null || size < 0 || fileName == null || fileName.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Valid image metadata is required");
