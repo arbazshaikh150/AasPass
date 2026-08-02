@@ -48,3 +48,6 @@ aws:
   secret-access-key: ${AWS_SECRET_ACCESS_KEY}
   s3:
     bucket: ${AWS_S3_BUCKET}
+
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
